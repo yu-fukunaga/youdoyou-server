@@ -1,0 +1,116 @@
+# Firestore Schema Definition
+# This file defines the data structure for the YouDoYou Chat application.
+# Both server (Go) and client (SwiftUI) should reference this schema.
+
+collections:
+  threads:
+    description: "Chat threads"
+    fields:
+      - name: userId
+        type: string
+        description: "Owner of the thread"
+
+      - name: title
+        type: string
+        description: "Thread title"
+
+      - name: isPrivate
+        type: boolean
+        description: "If true, excluded from weekly reports"
+
+      - name: isArchived
+        type: boolean
+        description: "If true, hidden from thread list"
+
+      - name: lastMessage
+        type: string
+        description: "Preview of the last message (truncated)"
+
+      - name: lastMessageAt
+        type: timestamp
+        description: "Timestamp of the last message"
+
+      - name: summary
+        type: string
+        description: "AI-generated summary of older messages"
+
+      - name: summarizedUntil
+        type: timestamp
+        description: "Messages before this time are summarized"
+
+      - name: createdAt
+        type: timestamp
+
+      - name: updatedAt
+        type: timestamp
+
+    subcollections:
+      messages:
+        description: "Messages in a thread"
+        fields:
+          - name: role
+            type: string
+            description: "Message sender role"
+            enum:
+              - user
+              - assistant
+
+          - name: content
+            type: string
+            description: "Message content (supports markdown)"
+
+          - name: status
+            type: string
+            description: "Message processing status"
+            enum:
+              - unread      # Server has not seen yet
+              - received    # Server acknowledged
+              - generating  # AI is generating response
+              - completed   # Done
+              - error       # Failed
+
+          - name: attachments
+            type: array
+            description: "Attached files"
+            items:
+              type: map
+              fields:
+                - name: type
+                  type: string
+                  enum: [image, text, document, audio, video]
+                - name: url
+                  type: string
+                  description: "Cloud Storage URL (gs://...)"
+                - name: mimeType
+                  type: string
+                - name: name
+                  type: string
+                - name: size
+                  type: number
+                  description: "File size in bytes"
+
+          - name: aiMetadata
+            type: map
+            description: "AI response metadata (assistant messages only)"
+            fields:
+              - name: model
+                type: string
+                description: "Model used (e.g., gpt-4o, claude-sonnet)"
+              - name: usage
+                type: map
+                fields:
+                  - name: promptTokens
+                    type: number
+                  - name: completionTokens
+                    type: number
+                  - name: totalTokens
+                    type: number
+              - name: finishReason
+                type: string
+                description: "stop, length, tool_calls, etc."
+              - name: responseId
+                type: string
+                description: "API response ID"
+
+          - name: createdAt
+            type: timestamp
