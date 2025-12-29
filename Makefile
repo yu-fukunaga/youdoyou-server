@@ -36,7 +36,7 @@ test:
 # Run linter
 lint:
 	@echo "Running linter..."
-	./bin/golangci-lint run
+	go tool golangci-lint run
 
 # Clean build artifacts
 clean:
@@ -48,8 +48,6 @@ setup:
 	@echo "Setting up..."
 	go mod tidy
 	go mod download
-	@echo "Installing golangci-lint..."
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./bin latest
 
 # Start Firebase emulators
 emulators:
