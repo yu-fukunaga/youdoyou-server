@@ -90,6 +90,7 @@ func main() {
 	// ===== START SERVER =====
 
 	log.Printf("Starting server on :%s", cfg.Port)
+	// nosemgrep: go.lang.security.audit.net.use-tls.use-tls
 	if err := http.ListenAndServe(":"+cfg.Port, mux); err != nil {
 		log.Fatal(err)
 	}

@@ -1,4 +1,4 @@
-.PHONY: build run seed check test clean setup lint
+.PHONY: build run seed check test clean setup lint secure semgrep secrets
 
 # Build all binaries
 build:
@@ -42,6 +42,20 @@ lint:
 clean:
 	@echo "Cleaning..."
 	rm -rf bin
+
+# Security scan with semgrep
+semgrep:
+	@echo "Running Semgrep..."
+	semgrep --config p/golang --config p/security-audit --config p/ci .
+
+# Secret scan with gitleaks
+secrets:
+	@echo "Running gitleaks..."
+	gitleaks detect --source .
+
+# All security checks
+secure: secrets semgrep
+	@echo "Security checks completed!"
 
 # Setup dependencies
 setup:

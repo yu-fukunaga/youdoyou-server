@@ -54,39 +54,61 @@ All standard tasks are managed via `Makefile`.
 | `make emulators` | Starts Firebase emulators (Firestore). |
 | `make seed` | Seeds Firestore emulator with sample data. |
 | `make check` | Runs a diagnostic tool to verify Firestore state. |
+| `make semgrep` | Runs local security scan using Semgrep. |
+| `make secrets` | Runs local secret leak detection using Gitleaks. |
+| `make secure` | Runs both Semgrep and Gitleaks checks. |
 
 ## Security (Local)
 
-To prevent accidental leakage of API keys or secrets, it is highly recommended to set up `gitleaks` as a local `pre-commit` hook.
+To prevent accidental leakage of API keys or secrets, and to perform security audits locally, it is highly recommended to set up the following tools.
 
-1. **Install Gitleaks**:
-   ```bash
-   brew install gitleaks
-   ```
+### 1. Gitleaks (Secret Detection)
+- **Install Gitleaks**:
+  ```bash
+  brew install gitleaks
+  ```
 
-2. **Configure Pre-commit Hook**:
-   Create or update `.git/hooks/pre-commit` with the following:
-   ```bash
-   #!/bin/bash
-   gitleaks protect --staged --exit-code 1
-   if [ $? -ne 0 ]; then
-     echo "❌ gitleaks: シークレットが検出されました。コミットを中止します。"
-     exit 1
-   fi
-   ```
+- **Configure Pre-commit Hook**:
+  Create or update `.git/hooks/pre-commit` with the following:
+  ```bash
+  #!/bin/bash
+  gitleaks protect --staged --exit-code 1
+  if [ $? -ne 0 ]; then
+    echo "❌ gitleaks: シークレットが検出されました。コミットを中止します。"
+    exit 1
+  fi
+  ```
 
-3. **Make it Executable**:
-   ```bash
-   chmod +x .git/hooks/pre-commit
-   ```
+- **Make it Executable**:
+  ```bash
+  chmod +x .git/hooks/pre-commit
+  ```
 
-## CI/CD
+### 2. Semgrep (Static Analysis)
+- **Install Semgrep**:
+  ```bash
+  brew install semgrep
+  ```
 
-This project uses GitHub Actions for automated verification. The CI workflow (`.github/workflows/ci.yml`) runs on every push and pull request to the `main` branch, performing:
+- **Run Scan**:
+  You can run a local security scan anytime using:
+  ```bash
+  make secure
+  ```
+
+This project uses GitHub Actions for automated verification and security scanning.
+
+### Continuous Integration
+The CI workflow (`.github/workflows/ci.yml`) runs on every push and pull request to the `main` branch:
 - **setup-deps**: Prepares the Go environment and dependency cache.
-- **lint**: Runs static analysis.
+- **lint**: Runs static analysis (`golangci-lint`).
 - **build**: Verifies the project compiles.
 - **test**: Runs the test suite.
+
+### Security and Maintenance
+- **Semgrep**: Static analysis security testing (SAST) runs on every PR (`.github/workflows/semgrep.yml`) to detect potential security vulnerabilities.
+- **Dependabot**: Automatically monitors and creates pull requests for Go module and GitHub Actions updates (`.github/dependabot.yml`).
+- **Gitleaks**: Prevent secret leakage via local `pre-commit` hook (see Security section).
 
 ## License
 
