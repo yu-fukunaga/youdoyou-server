@@ -77,7 +77,9 @@ func (h *ChatHandler) HandleMessage(w http.ResponseWriter, r *http.Request) {
 	// 即座に response を返す（非同期処理）
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted) // 202 Accepted
-	json.NewEncoder(w).Encode(ChatProcessResponse{})
+	if err := json.NewEncoder(w).Encode(ChatProcessResponse{}); err != nil {
+		log.Printf("Error encoding response: %v", err)
+	}
 }
 
 func extractThreadIDFromPath(path string) string {

@@ -30,7 +30,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer firestoreClient.Close()
+	defer func() {
+		if err := firestoreClient.Close(); err != nil {
+			log.Printf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	// Google Calendar - Disabled for now
 	// calendarService, err := calendar.NewService(ctx, option.WithScopes(calendar.CalendarScope))

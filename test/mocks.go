@@ -8,7 +8,6 @@ import (
 
 // Mock ChatRepository
 type MockChatRepository struct {
-	messages map[string]*model.ChatMessage
 }
 
 // Ensure interface compliance

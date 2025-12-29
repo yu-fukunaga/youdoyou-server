@@ -1,4 +1,4 @@
-.PHONY: build run seed check test clean setup
+.PHONY: build run seed check test clean setup lint
 
 # Build all binaries
 build:
@@ -33,6 +33,11 @@ test:
 	@echo "Running tests..."
 	go test -v ./...
 
+# Run linter
+lint:
+	@echo "Running linter..."
+	./bin/golangci-lint run
+
 # Clean build artifacts
 clean:
 	@echo "Cleaning..."
@@ -43,6 +48,8 @@ setup:
 	@echo "Setting up..."
 	go mod tidy
 	go mod download
+	@echo "Installing golangci-lint..."
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./bin latest
 
 # Start Firebase emulators
 emulators:

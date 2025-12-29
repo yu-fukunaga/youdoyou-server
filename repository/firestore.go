@@ -34,7 +34,9 @@ func (r *FirestoreChatRepository) GetLatestUserMessage(ctx context.Context, thre
 	}
 
 	var msg model.ChatMessage
-	docs[0].DataTo(&msg)
+	if err := docs[0].DataTo(&msg); err != nil {
+		return nil, fmt.Errorf("failed to parse message data: %v", err)
+	}
 	msg.ID = docs[0].Ref.ID
 
 	return &msg, nil
@@ -53,7 +55,9 @@ func (r *FirestoreChatRepository) GetConversationHistory(ctx context.Context, th
 	var messages []model.ChatMessage
 	for _, doc := range docs {
 		var msg model.ChatMessage
-		doc.DataTo(&msg)
+		if err := doc.DataTo(&msg); err != nil {
+			return nil, fmt.Errorf("failed to parse history message data: %v", err)
+		}
 		msg.ID = doc.Ref.ID
 		messages = append(messages, msg)
 	}

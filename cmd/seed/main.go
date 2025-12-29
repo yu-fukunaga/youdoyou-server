@@ -32,7 +32,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
-	defer client.Close()
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Printf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := repository.NewFirestoreChatRepository(client)
 
