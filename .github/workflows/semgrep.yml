@@ -2,7 +2,9 @@ name: Semgrep
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - develop
+      - main
   pull_request:
 
 jobs:
