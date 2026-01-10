@@ -12,7 +12,7 @@ import (
 	"github.com/firebase/genkit/go/genkit"
 )
 
-type ChatService struct {
+type AgentService struct {
 	chatRepo     repository.ChatRepository
 	calendarRepo repository.CalendarRepository
 	notionRepo   repository.NotionRepository
@@ -20,14 +20,14 @@ type ChatService struct {
 	tools        []ai.Tool
 }
 
-func NewChatService(
+func NewAgentService(
 	chatRepo repository.ChatRepository,
 	calendarRepo repository.CalendarRepository,
 	notionRepo repository.NotionRepository,
 	genkitClient *genkit.Genkit,
 	tools []ai.Tool,
-) *ChatService {
-	return &ChatService{
+) *AgentService {
+	return &AgentService{
 		chatRepo:     chatRepo,
 		calendarRepo: calendarRepo,
 		notionRepo:   notionRepo,
@@ -36,7 +36,7 @@ func NewChatService(
 	}
 }
 
-func (s *ChatService) ProcessMessage(ctx context.Context, threadID string) error {
+func (s *AgentService) Chat(ctx context.Context, threadID string) error {
 	log.Printf("ProcessMessage started for thread: %s", threadID)
 
 	// 1. Get latest user message
@@ -46,7 +46,6 @@ func (s *ChatService) ProcessMessage(ctx context.Context, threadID string) error
 	}
 	log.Printf("Found user message: %s", userMsg.ID)
 
-	// 2. Mark as processing
 	// 2. Mark as processing
 	if err := s.chatRepo.UpdateMessageStatus(ctx, threadID, userMsg.ID, "generating"); err != nil {
 		log.Printf("Failed to update status to generating: %v", err)
@@ -182,7 +181,7 @@ func (s *ChatService) ProcessMessage(ctx context.Context, threadID string) error
 	return nil
 }
 
-func (s *ChatService) buildHistoryMessages(history []model.ChatMessage) []*ai.Message {
+func (s *AgentService) buildHistoryMessages(history []model.ChatMessage) []*ai.Message {
 	var messages []*ai.Message
 
 	// System Prompt

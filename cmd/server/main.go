@@ -8,6 +8,8 @@ import (
 	"cloud.google.com/go/firestore"
 	"github.com/firebase/genkit/go/genkit"
 	"github.com/firebase/genkit/go/plugins/googlegenai"
+	"github.com/go-chi/chi/v5"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/jomei/notionapi"
 
 	"youdoyou-server/config"
@@ -19,34 +21,20 @@ import (
 
 func main() {
 	ctx := context.Background()
-
-	// ===== LOAD CONFIG =====
 	cfg := config.LoadConfig()
 
-	// ===== INITIALIZE CLIENTS =====
+	// --- 1. Clients & SDKs Initialization ---
 
-	// Firestore
 	firestoreClient, err := firestore.NewClient(ctx, cfg.FirestoreProjectID)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer func() {
-		if err := firestoreClient.Close(); err != nil {
-			log.Printf("Failed to close Firestore client: %v", err)
-		}
-	}()
-
-	// Google Calendar - Disabled for now
-	// calendarService, err := calendar.NewService(ctx, option.WithScopes(calendar.CalendarScope))
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	defer firestoreClient.Close()
 
 	// Notion
 	notionClient := notionapi.NewClient(notionapi.Token(cfg.NotionToken))
 
 	// Genkit
-	// Create Google AI plugin instance
 	googleAI := &googlegenai.GoogleAI{
 		APIKey: cfg.GoogleGenaiApiKey,
 	}
@@ -56,42 +44,45 @@ func main() {
 		genkit.WithDefaultModel("googleai/gemini-3-flash-preview"),
 	)
 
-	// ===== INITIALIZE REPOSITORIES =====
+	// --- 2. Dependency Injection (DI) ---
 
 	chatRepo := repository.NewFirestoreChatRepository(firestoreClient)
-	// calendarRepo := repository.NewGoogleCalendarRepository(calendarService)
 	notionRepo := repository.NewNotionRepository(notionClient)
 
-	// ===== INITIALIZE TOOLS =====
 	toolFactory := tool.NewToolFactory(g, chatRepo, nil, notionRepo)
 	tools := toolFactory.CreateAllTools()
 
-	// ===== INITIALIZE SERVICES =====
+	agentService := service.NewAgentService(chatRepo, nil, notionRepo, g, tools)
+	agentHandler := handler.NewAgentHandler(agentService)
 
-	chatService := service.NewChatService(
-		chatRepo,
-		nil,
-		notionRepo,
-		g,
-		tools,
-	)
+	// --- 3. HTTP Routing with chi ---
 
-	// ===== INITIALIZE HANDLERS =====
+	r := chi.NewRouter()
 
-	chatHandler := handler.NewChatHandler(chatService)
+	// A. グローバルミドルウェア (chi標準のもの)
+	r.Use(chimiddleware.Logger)    // 全リクエストをログ出力
+	r.Use(chimiddleware.Recoverer) // パニック発生時にサーバー停止を防ぐ
+	r.Use(chimiddleware.RealIP)    // プロキシ配下でもクライアントIPを正しく取得
 
-	// ===== HTTP ROUTING =====
+	// B. ルーティングの構築
+	r.Route("/v1", func(r chi.Router) {
 
-	mux := http.NewServeMux()
+		// デバッグ/手動実行用 (人間が叩く)
+		r.Post("/agent/chat", agentHandler.HandleAgentChat)
 
-	// Eventarc トリガー + Cloud Scheduler トリガー
-	mux.HandleFunc("POST /v1/chat/process", chatHandler.HandleMessage)
+		// システム連携用 (Eventarc / Scheduler)
+		r.Post("/hooks/firestore", agentHandler.HandleFirestoreTrigger)
 
-	// ===== START SERVER =====
+		// ヘルスチェック
+		r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("pong"))
+		})
+	})
 
+	// --- 4. Start Server ---
 	log.Printf("Starting server on :%s", cfg.Port)
 	// nosemgrep: go.lang.security.audit.net.use-tls.use-tls
-	if err := http.ListenAndServe(":"+cfg.Port, mux); err != nil {
+	if err := http.ListenAndServe(":"+cfg.Port, r); err != nil {
 		log.Fatal(err)
 	}
 }
