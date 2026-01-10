@@ -5,7 +5,7 @@ go 1.25.5
 require (
 	cloud.google.com/go/firestore v1.20.0
 	firebase.google.com/go/v4 v4.15.2
-	github.com/firebase/genkit/go v1.2.0
+	github.com/firebase/genkit/go v1.3.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/googleapis/google-cloudevents-go v0.10.0
 	github.com/joho/godotenv v1.5.1
@@ -250,7 +250,7 @@ require (
 	golang.org/x/tools/go/expect v0.1.1-deprecated // indirect
 	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
 	google.golang.org/appengine/v2 v2.0.6 // indirect
-	google.golang.org/genai v1.30.0 // indirect
+	google.golang.org/genai v1.40.0 // indirect
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251022142026-3a174f9686a8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2 // indirect
