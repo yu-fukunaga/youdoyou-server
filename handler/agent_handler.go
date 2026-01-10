@@ -51,7 +51,12 @@ func (h *AgentHandler) HandleAgentChat(w http.ResponseWriter, r *http.Request) {
 
 	// 成功レスポンス
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(AgentChatResponse{Status: "ok"})
+	err = json.NewEncoder(w).Encode(AgentChatResponse{Status: "ok"})
+	if err != nil {
+		log.Printf("Failed to encode response: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
 
 // ==========================================

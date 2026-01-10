@@ -75,7 +75,12 @@ func main() {
 
 		// ヘルスチェック
 		r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("pong"))
+			_, err := w.Write([]byte("pong"))
+			if err != nil {
+				log.Printf("Failed to write response: %v", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
 		})
 	})
 
