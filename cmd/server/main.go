@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"cloud.google.com/go/firestore"
 	"github.com/firebase/genkit/go/genkit"
@@ -87,7 +88,14 @@ func main() {
 	// --- 4. Start Server ---
 	log.Printf("Starting server on :%s", cfg.Port)
 	// nosemgrep: go.lang.security.audit.net.use-tls.use-tls
-	if err := http.ListenAndServe(":"+cfg.Port, r); err != nil {
+	srv := &http.Server{
+		Addr:         ":" + cfg.Port,
+		Handler:      r,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }
