@@ -57,6 +57,99 @@ All standard tasks are managed via `Makefile`.
 | `make semgrep` | Runs local security scan using Semgrep. |
 | `make secrets` | Runs local secret leak detection using Gitleaks. |
 | `make secure` | Runs both Semgrep and Gitleaks checks. |
+| `make ghtag` | Creates a GitHub release (auto-increment patch version). |
+| `make ghtag/minor` | Creates a GitHub release (auto-increment minor version). |
+| `make ghtag/major` | Creates a GitHub release (auto-increment major version). |
+| `make release` | Deploys the latest release tag to Cloud Run. |
+| `make release/v1.0.0` | Deploys a specific release tag to Cloud Run. |
+
+## Deployment
+
+This project uses release-based deployment workflow. All deployments to production are tagged with semantic versioning.
+
+### Prerequisites
+
+1. **gcloud CLI**: Ensure you are authenticated and the correct project is set.
+   ```bash
+   gcloud auth login
+   gcloud config set project youdoyou-intelligence
+   ```
+
+2. **gh CLI** (optional, for GitHub release creation):
+   ```bash
+   brew install gh
+   gh auth login
+   ```
+
+3. **Setup Secrets**: Before first deployment, ensure GCP secrets are configured.
+   ```bash
+   ./scripts/setup_secrets.sh
+   ```
+
+### Deployment Workflow
+
+The deployment process consists of two steps: creating a GitHub release and deploying it to Cloud Run.
+
+#### Step 1: Create a GitHub Release
+
+**Auto-increment version:**
+
+```bash
+# Patch version (v1.0.0 -> v1.0.1) - for bug fixes and small improvements
+make ghtag
+
+# Minor version (v1.0.0 -> v1.1.0) - for new features
+make ghtag/minor
+
+# Major version (v1.0.0 -> v2.0.0) - for breaking changes
+make ghtag/major
+```
+
+**With custom release notes:**
+
+```bash
+./scripts/create_release.sh patch "Bug fixes and performance improvements"
+./scripts/create_release.sh minor "New feature: User authentication"
+./scripts/create_release.sh major "Breaking: API v2 migration"
+```
+
+#### Step 2: Deploy to Cloud Run
+
+After creating a release, deploy it to Cloud Run:
+
+```bash
+# Deploy the latest release
+make release
+
+# Or deploy a specific release
+make release/v1.0.1
+```
+
+#### Complete Workflow Example
+
+```bash
+# 1. Create a new release (auto-increment patch)
+make ghtag
+
+# 2. Deploy the latest release
+make release
+```
+
+### Semantic Versioning
+
+This project follows [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH):
+
+- **PATCH** (v1.0.0 → v1.0.1): Bug fixes, small improvements, no API changes
+- **MINOR** (v1.0.0 → v1.1.0): New features, backwards-compatible changes
+- **MAJOR** (v1.0.0 → v2.0.0): Breaking changes, major refactoring
+
+### Deployment Details
+
+- **Region**: asia-northeast2 (Seoul)
+- **Service Name**: youdoyou-server
+- **Authentication**: No public access (requires authentication)
+- **Secrets**: NOTION_TOKEN and GOOGLE_GENAI_API_KEY are loaded from GCP Secret Manager
+- **Revision Naming**: Each release deployment creates a revision with the format `youdoyou-server-{version}` (e.g., `youdoyou-server-1-0-0`)
 
 ## Security (Local)
 
