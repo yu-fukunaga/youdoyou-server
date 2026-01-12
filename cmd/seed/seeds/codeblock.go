@@ -59,7 +59,7 @@ import (
 	// Genkitのコア機能
 	"github.com/firebase/genkit/go/ai"
 	"github.com/firebase/genkit/go/genkit"
-	
+
 	// Google AI (Gemini) プラグイン
 	"github.com/firebase/genkit/go/plugins/googleai"
 )
@@ -78,7 +78,7 @@ func main() {
 	// 3. 「Flow（エージェントの処理フロー）」の定義
 	// "jokeFlow" という名前でフローを登録します
 	jokeFlow := genkit.DefineFlow("jokeFlow", func(ctx context.Context, subject string) (string, error) {
-		
+
 		// AIへのプロンプト作成
 		prompt := fmt.Sprintf("%s についての面白いジョークを1つ言ってください。", subject)
 
@@ -212,7 +212,7 @@ import (
 	// Genkitのコア機能
 	"github.com/firebase/genkit/go/ai"
 	"github.com/firebase/genkit/go/genkit"
-	
+
 	// Google AI (Gemini) プラグイン
 	"github.com/firebase/genkit/go/plugins/googleai"
 )
@@ -231,7 +231,7 @@ func main() {
 	// 3. 「Flow（エージェントの処理フロー）」の定義
 	// "jokeFlow" という名前でフローを登録します
 	jokeFlow := genkit.DefineFlow("jokeFlow", func(ctx context.Context, subject string) (string, error) {
-		
+
 		// AIへのプロンプト作成
 		prompt := fmt.Sprintf("%s についての面白いジョークを1つ言ってください。", subject)
 
