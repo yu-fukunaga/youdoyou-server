@@ -11,8 +11,8 @@ if [[ ! "$INCREMENT_TYPE" =~ ^(patch|minor|major)$ ]]; then
   exit 1
 fi
 
-# Get the latest tag from git
-LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+# Get the latest tag from main branch
+LATEST_TAG=$(git describe --tags --abbrev=0 origin/main 2>/dev/null || echo "v0.0.0")
 
 # Remove 'v' prefix if present
 VERSION="${LATEST_TAG#v}"

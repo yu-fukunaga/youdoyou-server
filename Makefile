@@ -76,6 +76,11 @@ emulators:
 	@echo "Starting emulators..."
 	cd firebase && firebase emulators:start
 
+# Prepare release by merging develop into main
+# Usage: make prepare-release
+prepare-release:
+	@./scripts/prepare_release.sh
+
 # Create GitHub tag and release (auto-increment version)
 # Usage: make ghtag        -> auto-increment patch (v1.0.0 -> v1.0.1)
 # Usage: make ghtag/minor  -> auto-increment minor (v1.0.0 -> v1.1.0)
