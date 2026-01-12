@@ -57,6 +57,7 @@ All standard tasks are managed via `Makefile`.
 | `make semgrep` | Runs local security scan using Semgrep. |
 | `make secrets` | Runs local secret leak detection using Gitleaks. |
 | `make secure` | Runs both Semgrep and Gitleaks checks. |
+| `make prepare-release` | Merges develop into main for release preparation. |
 | `make ghtag` | Creates a GitHub release (auto-increment patch version). |
 | `make ghtag/minor` | Creates a GitHub release (auto-increment minor version). |
 | `make ghtag/major` | Creates a GitHub release (auto-increment major version). |
@@ -88,11 +89,27 @@ This project uses release-based deployment workflow. All deployments to producti
 
 ### Deployment Workflow
 
-The deployment process consists of two steps: creating a GitHub release and deploying it to Cloud Run.
+This project uses a three-step release workflow:
 
-#### Step 1: Create a GitHub Release
+1. **Prepare Release**: Merge `develop` into `main` via PR
+2. **Create Release**: Create a GitHub release (tags are created on `main` branch automatically)
+3. **Deploy**: Deploy the release to Cloud Run
 
-**Auto-increment version:**
+#### Step 1: Prepare Release (Merge develop to main)
+
+```bash
+make prepare-release
+```
+
+This command will:
+- Fetch latest changes from remote
+- Show commits that will be merged from `develop` to `main`
+- Create a PR for review
+- After PR is merged, `main` branch will be updated
+
+#### Step 2: Create a GitHub Release
+
+**Note**: You can run this from any branch. The release tag will be created on the `main` branch on GitHub.
 
 ```bash
 # Patch version (v1.0.0 -> v1.0.1) - for bug fixes and small improvements
@@ -105,6 +122,12 @@ make ghtag/minor
 make ghtag/major
 ```
 
+The command will:
+- Automatically calculate the next version
+- Check for duplicate releases (prevents creating release without changes)
+- Warn if `develop` has unmerged commits
+- Create release and tag on GitHub's `main` branch
+
 **With custom release notes:**
 
 ```bash
@@ -113,7 +136,7 @@ make ghtag/major
 ./scripts/create_release.sh major "Breaking: API v2 migration"
 ```
 
-#### Step 2: Deploy to Cloud Run
+#### Step 3: Deploy to Cloud Run
 
 After creating a release, deploy it to Cloud Run:
 
@@ -125,13 +148,22 @@ make release
 make release/v1.0.1
 ```
 
+The deploy command will:
+- Checkout the release tag to ensure exact code match
+- Deploy to Cloud Run with proper revision naming
+- Automatically restore your original branch
+
 #### Complete Workflow Example
 
 ```bash
-# 1. Create a new release (auto-increment patch)
+# 1. Prepare release (create PR from develop to main)
+make prepare-release
+# → Review and merge PR on GitHub
+
+# 2. Create a new release (can run from any branch)
 make ghtag
 
-# 2. Deploy the latest release
+# 3. Deploy the latest release
 make release
 ```
 
