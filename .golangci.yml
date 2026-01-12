@@ -1,0 +1,20 @@
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    - gofmt          # フォーマットチェック
+    - goimports      # import順序チェック
+    - gomoddirectives # go.modの不要なディレクティブチェック
+    - gomodguard     # go.modの依存関係チェック
+    - gosec          # セキュリティチェック
+    - errcheck       # エラーチェック漏れ
+    - unused         # 未使用コード
+    - staticcheck    # 静的解析
+
+linters-settings:
+  gofmt:
+    simplify: true
+  goimports:
+    local-prefixes: youdoyou-server

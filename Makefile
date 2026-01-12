@@ -38,6 +38,14 @@ lint:
 	@echo "Running linter..."
 	go tool golangci-lint run
 
+# Format code
+format:
+	@echo "Formatting code..."
+	go fmt ./...
+	go tool golangci-lint run --fix
+	pre-commit run trailing-whitespace --all-files || true
+	pre-commit run end-of-file-fixer --all-files || true
+
 # Clean build artifacts
 clean:
 	@echo "Cleaning..."
