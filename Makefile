@@ -38,6 +38,14 @@ lint:
 	@echo "Running linter..."
 	go tool golangci-lint run
 
+# Format code
+format:
+	@echo "Formatting code..."
+	go fmt ./...
+	go tool golangci-lint run --fix
+	pre-commit run trailing-whitespace --all-files || true
+	pre-commit run end-of-file-fixer --all-files || true
+
 # Clean build artifacts
 clean:
 	@echo "Cleaning..."
@@ -67,3 +75,32 @@ setup:
 emulators:
 	@echo "Starting emulators..."
 	cd firebase && firebase emulators:start
+
+# Create GitHub tag and release (auto-increment version)
+# Usage: make ghtag        -> auto-increment patch (v1.0.0 -> v1.0.1)
+# Usage: make ghtag/minor  -> auto-increment minor (v1.0.0 -> v1.1.0)
+# Usage: make ghtag/major  -> auto-increment major (v1.0.0 -> v2.0.0)
+ghtag:
+	@./scripts/create_release.sh patch
+
+ghtag/minor:
+	@./scripts/create_release.sh minor
+
+ghtag/major:
+	@./scripts/create_release.sh major
+
+# Deploy a release to Cloud Run
+# Usage: make release           -> deploy latest tag
+# Usage: make release/v1.0.0    -> deploy specific tag
+release:
+	@LATEST_TAG=$$(git describe --tags --abbrev=0 2>/dev/null); \
+	if [ -z "$$LATEST_TAG" ]; then \
+		echo "Error: No tags found in repository"; \
+		echo "Please create a release first with: make ghtag"; \
+		exit 1; \
+	fi; \
+	echo "Deploying latest tag: $$LATEST_TAG"; \
+	./scripts/deploy_release.sh $$LATEST_TAG
+
+release/%:
+	@./scripts/deploy_release.sh $*

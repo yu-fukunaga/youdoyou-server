@@ -1,0 +1,38 @@
+repos:
+  # 1. 基本的なファイルチェック
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+
+  # 2. 秘密情報の漏洩防止
+  - repo: local
+    hooks:
+      - id: make-secrets
+        name: make secrets
+        entry: make secrets
+        language: system
+        pass_filenames: false
+
+  # 3. セキュリティ・脆弱性スキャン
+  - repo: local
+    hooks:
+      - id: make-semgrep
+        name: make semgrep
+        entry: make semgrep
+        language: system
+        pass_filenames: false
+
+  # 4. Go言語固有のチェック
+  - repo: local
+    hooks:
+      - id: make-lint
+        name: make lint
+        entry: make lint
+        language: system
+        types: [go]
+        pass_filenames: false
