@@ -67,3 +67,8 @@ setup:
 emulators:
 	@echo "Starting emulators..."
 	cd firebase && firebase emulators:start
+
+# Deploy to Cloud Run
+deploy:
+	@echo "Deploying to Cloud Run..."
+	./scripts/build_deploy.sh
