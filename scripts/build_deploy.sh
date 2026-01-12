@@ -46,6 +46,8 @@ gcloud run deploy youdoyou-server \
   --source . \
   --region asia-northeast2 \
   --platform managed \
+  --no-allow-unauthenticated \
+  --set-build-env-vars GOOGLE_BUILDABLE=./cmd/server \
   --set-env-vars FIRESTORE_PROJECT_ID=$GCP_PROJECT_ID \
   --update-secrets NOTION_TOKEN=NOTION_TOKEN:latest,GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest \
   --project $GCP_PROJECT_ID
