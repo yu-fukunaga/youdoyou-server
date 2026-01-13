@@ -8,9 +8,13 @@ build:
 	go build -o bin/seed ./cmd/seed
 
 # Run the server
-run:
-	@echo "Running server..."
-	go run ./cmd/server
+air:
+	@echo "Running server with air hot reload..."
+	@if [ ! -f bin/air ]; then \
+		echo "Air not found. Installing to bin/air..."; \
+		GOBIN=$(PWD)/bin go install github.com/air-verse/air@latest; \
+	fi
+	./bin/air
 
 # Run the seed tool
 # Seed all: make seed
