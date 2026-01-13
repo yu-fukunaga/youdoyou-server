@@ -54,6 +54,7 @@ All standard tasks are managed via `Makefile`.
 | `make emulators` | Starts Firebase emulators (Firestore). |
 | `make seed` | Seeds Firestore emulator with sample data. |
 | `make check` | Runs a diagnostic tool to verify Firestore state. |
+| `make create-message` | Creates a message in Firestore (requires `THREAD_ID` and `MESSAGE`). |
 | `make semgrep` | Runs local security scan using Semgrep. |
 | `make secrets` | Runs local secret leak detection using Gitleaks. |
 | `make secure` | Runs both Semgrep and Gitleaks checks. |
@@ -63,6 +64,37 @@ All standard tasks are managed via `Makefile`.
 | `make ghtag/major` | Creates a GitHub release (auto-increment major version). |
 | `make release` | Deploys the latest release tag to Cloud Run. |
 | `make release/v1.0.0` | Deploys a specific release tag to Cloud Run. |
+
+### Creating Messages Directly in Firestore
+
+You can create messages in Firestore without using the client app, which will trigger the agent processing via Eventarc (in production).
+
+**Using Make:**
+```bash
+make create-message THREAD_ID=test-thread-001 MESSAGE="今日のスケジュールを教えて"
+```
+
+**Using Script Directly:**
+```bash
+./scripts/create_message.sh test-thread-001 "今日のタスクを確認して"
+```
+
+**Using gcloud CLI:**
+```bash
+# Set project ID (first time only)
+export PROJECT_ID=youdoyou-intelligence
+
+# Create message
+gcloud firestore documents create \
+  "projects/${PROJECT_ID}/databases/(default)/documents/threads/test-thread-001/messages/" \
+  --project="${PROJECT_ID}" \
+  --fields="role=user,content=今日の予定は？,status=unread,createdAt=timestamp:{seconds:$(date +%s)}"
+```
+
+**Important Notes:**
+- Eventarc triggers only work in production Firestore (not in emulator)
+- For local testing, use the API endpoint: `POST /v1/agent/chat` with `{"threadId": "..."}`
+- The thread must exist before creating messages in it
 
 ## Deployment
 

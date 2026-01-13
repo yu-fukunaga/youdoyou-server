@@ -1,4 +1,4 @@
-.PHONY: build run seed check test clean setup lint secure semgrep secrets
+.PHONY: build run seed check test clean setup lint secure semgrep secrets create-message
 
 # Build all binaries
 build:
@@ -113,3 +113,11 @@ release:
 
 release/%:
 	@./scripts/deploy_release.sh $*
+
+# Create a message in Firestore
+# Usage: make create-message THREAD_ID=xxx MESSAGE='hello'
+create-message:
+	@if [ -z "$(THREAD_ID)" ]; then echo "Error: THREAD_ID is required. Usage: make create-message THREAD_ID=xxx MESSAGE='hello'"; exit 1; fi
+	@if [ -z "$(MESSAGE)" ]; then echo "Error: MESSAGE is required. Usage: make create-message THREAD_ID=xxx MESSAGE='hello'"; exit 1; fi
+	@echo "Creating message in thread: $(THREAD_ID)"
+	@./scripts/create_message.sh "$(THREAD_ID)" "$(MESSAGE)"
