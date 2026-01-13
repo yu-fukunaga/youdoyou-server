@@ -4,32 +4,27 @@
 
 set -e
 
-THREAD_ID="${1}"
-MESSAGE="${2}"
-PROJECT_ID="${PROJECT_ID:-youdoyou-intelligence}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-if [ -z "$THREAD_ID" ] || [ -z "$MESSAGE" ]; then
-  echo "Usage: $0 <thread-id> <message>"
-  echo "Example: $0 test-thread-001 '今日のスケジュールを教えて'"
+# Parse arguments and build go run command
+if [ $# -eq 1 ]; then
+  # Single argument: MESSAGE only (create new thread)
+  MESSAGE="${1}"
+  go run "$PROJECT_ROOT/cmd/create-message" --message "$MESSAGE"
+elif [ $# -eq 2 ]; then
+  # Two arguments: THREAD_ID + MESSAGE (use existing thread)
+  THREAD_ID="${1}"
+  MESSAGE="${2}"
+  go run "$PROJECT_ROOT/cmd/create-message" --thread-id "$THREAD_ID" --message "$MESSAGE"
+else
+  echo "Usage: $0 [thread-id] <message>"
+  echo ""
+  echo "Examples:"
+  echo "  # Create new thread:"
+  echo "  $0 '今日のスケジュールを教えて'"
+  echo ""
+  echo "  # Add to existing thread:"
+  echo "  $0 test-thread-001 '今日のスケジュールを教えて'"
   exit 1
 fi
-
-CURRENT_TIME=$(date +%s)
-
-echo "Creating message in Firestore..."
-echo "  Project: $PROJECT_ID"
-echo "  Thread ID: $THREAD_ID"
-echo "  Message: $MESSAGE"
-echo ""
-
-gcloud firestore documents create \
-  "projects/${PROJECT_ID}/databases/(default)/documents/threads/${THREAD_ID}/messages/" \
-  --project="${PROJECT_ID}" \
-  --fields="role=user,content=${MESSAGE},status=unread,createdAt=timestamp:{seconds:${CURRENT_TIME}}"
-
-echo ""
-echo "✅ Message created successfully in thread: ${THREAD_ID}"
-echo ""
-echo "The message will be processed by the agent via Eventarc trigger (production environment)."
-echo "For local testing, call the API endpoint directly:"
-echo "  curl -X POST http://localhost:8081/v1/agent/chat -d '{\"threadId\":\"${THREAD_ID}\"}'"

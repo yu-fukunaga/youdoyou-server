@@ -54,7 +54,7 @@ All standard tasks are managed via `Makefile`.
 | `make emulators` | Starts Firebase emulators (Firestore). |
 | `make seed` | Seeds Firestore emulator with sample data. |
 | `make check` | Runs a diagnostic tool to verify Firestore state. |
-| `make create-message` | Creates a message in Firestore (requires `THREAD_ID` and `MESSAGE`). |
+| `make create-message` | Creates a message in Firestore (requires `MESSAGE`, optional `THREAD_ID`). |
 | `make semgrep` | Runs local security scan using Semgrep. |
 | `make secrets` | Runs local secret leak detection using Gitleaks. |
 | `make secure` | Runs both Semgrep and Gitleaks checks. |
@@ -71,30 +71,38 @@ You can create messages in Firestore without using the client app, which will tr
 
 **Using Make:**
 ```bash
+# Create new thread automatically
+make create-message MESSAGE="今日のスケジュールを教えて"
+
+# Add to existing thread
 make create-message THREAD_ID=test-thread-001 MESSAGE="今日のスケジュールを教えて"
 ```
 
 **Using Script Directly:**
 ```bash
+# Create new thread automatically
+./scripts/create_message.sh "今日のタスクを確認して"
+
+# Add to existing thread
 ./scripts/create_message.sh test-thread-001 "今日のタスクを確認して"
 ```
 
-**Using gcloud CLI:**
+**Using Go CLI:**
 ```bash
-# Set project ID (first time only)
-export PROJECT_ID=youdoyou-intelligence
+# Create new thread automatically
+go run cmd/create-message --message "今日の予定は？"
 
-# Create message
-gcloud firestore documents create \
-  "projects/${PROJECT_ID}/databases/(default)/documents/threads/test-thread-001/messages/" \
-  --project="${PROJECT_ID}" \
-  --fields="role=user,content=今日の予定は？,status=unread,createdAt=timestamp:{seconds:$(date +%s)}"
+# Add to existing thread
+go run cmd/create-message --thread-id test-thread-001 --message "今日の予定は？"
+
+# Specify user ID for new threads
+go run cmd/create-message --message "今日の予定は？" --user-id "user-123"
 ```
 
 **Important Notes:**
 - Eventarc triggers only work in production Firestore (not in emulator)
 - For local testing, use the API endpoint: `POST /v1/agent/chat` with `{"threadId": "..."}`
-- The thread must exist before creating messages in it
+- When using Make or script without THREAD_ID, a new thread will be created automatically
 
 ## Deployment
 

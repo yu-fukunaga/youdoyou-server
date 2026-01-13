@@ -6,6 +6,7 @@ build:
 	go build -o bin/server ./cmd/server
 	go build -o bin/check ./cmd/check
 	go build -o bin/seed ./cmd/seed
+	go build -o bin/create-message ./cmd/create-message
 
 # Run the server
 air:
@@ -115,9 +116,18 @@ release/%:
 	@./scripts/deploy_release.sh $*
 
 # Create a message in Firestore
-# Usage: make create-message THREAD_ID=xxx MESSAGE='hello'
+# Usage: make create-message MESSAGE='hello' [THREAD_ID=xxx]
 create-message:
-	@if [ -z "$(THREAD_ID)" ]; then echo "Error: THREAD_ID is required. Usage: make create-message THREAD_ID=xxx MESSAGE='hello'"; exit 1; fi
-	@if [ -z "$(MESSAGE)" ]; then echo "Error: MESSAGE is required. Usage: make create-message THREAD_ID=xxx MESSAGE='hello'"; exit 1; fi
-	@echo "Creating message in thread: $(THREAD_ID)"
-	@./scripts/create_message.sh "$(THREAD_ID)" "$(MESSAGE)"
+	@if [ -z "$(MESSAGE)" ]; then \
+		echo "Error: MESSAGE is required."; \
+		echo ""; \
+		echo "Usage:"; \
+		echo "  make create-message MESSAGE='hello'                    # Create new thread"; \
+		echo "  make create-message THREAD_ID=xxx MESSAGE='hello'      # Use existing thread"; \
+		exit 1; \
+	fi
+	@if [ -z "$(THREAD_ID)" ]; then \
+		./scripts/create_message.sh "$(MESSAGE)"; \
+	else \
+		./scripts/create_message.sh "$(THREAD_ID)" "$(MESSAGE)"; \
+	fi
