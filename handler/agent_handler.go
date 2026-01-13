@@ -10,7 +10,7 @@ import (
 	"youdoyou-server/service"
 
 	"github.com/googleapis/google-cloudevents-go/cloud/firestoredata"
-	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 type AgentHandler struct {
@@ -75,7 +75,7 @@ func (h *AgentHandler) HandleFirestoreTrigger(w http.ResponseWriter, r *http.Req
 
 	// ★ 自前定義の ChatProcessEvent ではなく、公式ライブラリを使用
 	var eventData firestoredata.DocumentEventData
-	if err := protojson.Unmarshal(body, &eventData); err != nil {
+	if err := proto.Unmarshal(body, &eventData); err != nil {
 		log.Printf("Failed to unmarshal event: %v", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
