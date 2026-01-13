@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	cloud.google.com/go/firestore v1.20.0
-	firebase.google.com/go/v4 v4.15.2
+	firebase.google.com/go/v4 v4.18.0
 	github.com/firebase/genkit/go v1.2.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/googleapis/google-cloudevents-go v0.10.0
