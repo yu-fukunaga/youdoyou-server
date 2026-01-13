@@ -8,9 +8,13 @@ build:
 	go build -o bin/seed ./cmd/seed
 
 # Run the server
-run:
-	@echo "Running server..."
-	go run ./cmd/server
+air:
+	@echo "Running server with air hot reload..."
+	@if [ ! -f bin/air ]; then \
+		echo "Air not found. Installing to bin/air..."; \
+		GOBIN=$(PWD)/bin go install github.com/air-verse/air@latest; \
+	fi
+	./bin/air
 
 # Run the seed tool
 # Seed all: make seed
@@ -75,6 +79,11 @@ setup:
 emulators:
 	@echo "Starting emulators..."
 	cd firebase && firebase emulators:start
+
+# Prepare release by merging develop into main
+# Usage: make prepare-release
+prepare-release:
+	@./scripts/prepare_release.sh
 
 # Create GitHub tag and release (auto-increment version)
 # Usage: make ghtag        -> auto-increment patch (v1.0.0 -> v1.0.1)

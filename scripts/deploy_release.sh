@@ -15,6 +15,27 @@ fi
 
 RELEASE_TAG="$1"
 
+# Save current branch/commit for restoration later
+CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD)
+
+# Function to restore original branch
+restore_branch() {
+  echo ""
+  echo "Restoring original branch/commit: $CURRENT_BRANCH"
+  git checkout "$CURRENT_BRANCH" 2>/dev/null || true
+}
+
+# Set trap to restore branch on exit (success or failure)
+trap restore_branch EXIT
+
+# Check for uncommitted changes
+if ! git diff-index --quiet HEAD --; then
+  echo "Error: You have uncommitted changes in your working directory"
+  echo "Please commit or stash your changes before deploying"
+  git status --short
+  exit 1
+fi
+
 # Validate tag format (should start with 'v' followed by semver)
 if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
   echo "Warning: Tag '$RELEASE_TAG' does not follow semantic versioning (v1.2.3)"
@@ -112,7 +133,13 @@ echo "Project:         $GCP_PROJECT_ID"
 echo "Region:          asia-northeast2"
 echo "Revision Suffix: $REVISION_SUFFIX"
 echo "Traffic Tag:     $TRAFFIC_TAG"
+echo "Current Branch:  $CURRENT_BRANCH"
 echo "========================================"
+echo ""
+
+# Checkout the release tag
+echo "Checking out tag: $RELEASE_TAG"
+git checkout "$RELEASE_TAG"
 echo ""
 
 # Deploy to Cloud Run with release tag as revision suffix
