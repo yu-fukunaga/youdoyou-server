@@ -2,11 +2,14 @@ package repository
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
+	"time"
 
 	"youdoyou-server/model"
 
 	"cloud.google.com/go/firestore"
+	"github.com/oklog/ulid/v2"
 )
 
 type FirestoreChatRepository struct {
@@ -18,35 +21,45 @@ func NewFirestoreChatRepository(client *firestore.Client) ChatRepository {
 }
 
 func (r *FirestoreChatRepository) GetLatestUserMessage(ctx context.Context, threadID string) (*model.ChatMessage, error) {
-	query := r.client.Collection("threads").Doc(threadID).
-		Collection("messages").
-		Where("role", "==", "user").
-		Where("status", "==", "unread").
-		OrderBy("createdAt", firestore.Desc).
-		Limit(1)
+	// Query optimization: fetch all messages (ordered by ID implicitly via ULID or simple fetch)
+	// User requested to remove WHERE clauses to avoid composite index requirement.
+	// Since we are moving to standard fetch, we can reuse GetConversationHistory logic and filter in memory.
 
-	docs, err := query.Documents(ctx).GetAll()
+	messages, err := r.GetConversationHistory(ctx, threadID)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(docs) == 0 {
-		return nil, fmt.Errorf("no pending message found")
+	// Filter in memory for the latest user message that is 'unread'
+	// Iterate backwards since we want the latest
+	for i := len(messages) - 1; i >= 0; i-- {
+		msg := messages[i]
+		if msg.Role == "user" && msg.Status == "unread" {
+			// Return a pointer to the message
+			return &msg, nil
+		}
 	}
 
-	var msg model.ChatMessage
-	if err := docs[0].DataTo(&msg); err != nil {
-		return nil, fmt.Errorf("failed to parse message data: %v", err)
-	}
-	msg.ID = docs[0].Ref.ID
+	return nil, fmt.Errorf("no pending message found")
+}
 
-	return &msg, nil
+func (r *FirestoreChatRepository) GetThread(ctx context.Context, threadID string) (*model.ChatThread, error) {
+	doc, err := r.client.Collection("threads").Doc(threadID).Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get thread: %w", err)
+	}
+	var thread model.ChatThread
+	if err := doc.DataTo(&thread); err != nil {
+		return nil, fmt.Errorf("failed to parse thread data: %w", err)
+	}
+	thread.ID = doc.Ref.ID
+	return &thread, nil
 }
 
 func (r *FirestoreChatRepository) GetConversationHistory(ctx context.Context, threadID string) ([]model.ChatMessage, error) {
 	query := r.client.Collection("threads").Doc(threadID).
 		Collection("messages").
-		OrderBy("createdAt", firestore.Asc)
+		OrderBy(firestore.DocumentID, firestore.Asc)
 
 	docs, err := query.Documents(ctx).GetAll()
 	if err != nil {
@@ -67,15 +80,20 @@ func (r *FirestoreChatRepository) GetConversationHistory(ctx context.Context, th
 }
 
 func (r *FirestoreChatRepository) SaveMessage(ctx context.Context, message *model.ChatMessage) (string, error) {
-	docRef, _, err := r.client.Collection("threads").Doc(message.ThreadID).
-		Collection("messages").
-		Add(ctx, message)
+	// Generate ULID
+	entropy := ulid.Monotonic(rand.Reader, 0)
+	id := ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
+
+	// Use Doc(id).Set instead of Add
+	_, err := r.client.Collection("threads").Doc(message.ThreadID).
+		Collection("messages").Doc(id).
+		Set(ctx, message)
 
 	if err != nil {
 		return "", err
 	}
 
-	return docRef.ID, nil
+	return id, nil
 }
 
 func (r *FirestoreChatRepository) UpdateMessageStatus(ctx context.Context, threadID, messageID string, status string) error {
