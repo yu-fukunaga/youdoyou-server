@@ -28,6 +28,13 @@ func (m *MockChatRepository) GetConversationHistory(ctx context.Context, threadI
 	return []model.ChatMessage{}, nil
 }
 
+func (m *MockChatRepository) GetThread(ctx context.Context, threadID string) (*model.ChatThread, error) {
+	return &model.ChatThread{
+		ID:      threadID,
+		Summary: "Mock summary for testing",
+	}, nil
+}
+
 func (m *MockChatRepository) SaveMessage(ctx context.Context, message *model.ChatMessage) (string, error) {
 	return "mock_id", nil
 }
