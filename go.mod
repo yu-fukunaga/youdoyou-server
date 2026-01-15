@@ -5,12 +5,13 @@ go 1.25.5
 require (
 	cloud.google.com/go/firestore v1.20.0
 	firebase.google.com/go/v4 v4.18.0
-	github.com/firebase/genkit/go v1.2.0
+	github.com/firebase/genkit/go v1.4.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/googleapis/google-cloudevents-go v0.10.0
 	github.com/joho/godotenv v1.5.1
 	github.com/jomei/notionapi v1.13.3
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/oklog/ulid/v2 v2.1.1
 	google.golang.org/api v0.258.0
 	google.golang.org/protobuf v1.36.11
 )
@@ -161,7 +162,6 @@ require (
 	github.com/nishanths/exhaustive v0.12.0 // indirect
 	github.com/nishanths/predeclared v0.2.2 // indirect
 	github.com/nunnatsa/ginkgolinter v0.19.1 // indirect
-	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
@@ -253,7 +253,7 @@ require (
 	golang.org/x/tools/go/expect v0.1.1-deprecated // indirect
 	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
 	google.golang.org/appengine/v2 v2.0.6 // indirect
-	google.golang.org/genai v1.30.0 // indirect
+	google.golang.org/genai v1.41.0 // indirect
 	google.golang.org/genproto v0.0.0-20250715232539-7130f93afb79 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251022142026-3a174f9686a8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2 // indirect
