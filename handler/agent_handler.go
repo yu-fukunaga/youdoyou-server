@@ -91,6 +91,18 @@ func (h *AgentHandler) HandleFirestoreTrigger(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// Check if the message is from a user (only process user messages)
+	fields := eventData.GetValue().GetFields()
+	if roleField, ok := fields["role"]; ok {
+		role := roleField.GetStringValue()
+		if role != "user" {
+			// assistantメッセージなら処理せず正常終了
+			log.Printf("Skipping non-user message (role=%s)", role)
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+	}
+
 	if err := h.agentService.Chat(ctx, threadID); err != nil {
 		log.Printf("❌ Firestore trigger failed: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

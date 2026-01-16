@@ -8,11 +8,10 @@ import (
 
 // ChatRepository - Firestore
 type ChatRepository interface {
-	GetLatestUserMessage(ctx context.Context, threadID string) (*model.ChatMessage, error)
-	GetConversationHistory(ctx context.Context, threadID string) ([]model.ChatMessage, error)
+	GetUnmemorizedMessages(ctx context.Context, threadID string) ([]model.ChatMessage, error)
 	GetThread(ctx context.Context, threadID string) (*model.ChatThread, error)
 	SaveMessage(ctx context.Context, message *model.ChatMessage) (string, error)
-	UpdateMessageStatus(ctx context.Context, threadID, messageID string, status string) error
+	CreateThread(ctx context.Context, thread *model.ChatThread) error
 }
 
 // CalendarRepository - Google Calendar

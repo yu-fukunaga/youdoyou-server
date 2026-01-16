@@ -5,12 +5,15 @@ import "youdoyou-server/model"
 func init() {
 	Register("codeblock", SeedData{
 		Thread: model.ChatThread{
-			ID:         "codeblock-thread",
-			UserID:     "demo-user-001",
-			Title:      "Code Block Example",
-			IsPrivate:  false,
-			IsArchived: false,
-			LastMessage: `
+			ID:           "codeblock-thread",
+			UserID:       "demo-user-001",
+			FirstMessage: "GoogleのAgentDevelopmentKit ADK-goについて詳しく教えて。コード例も見せて。",
+			UnreadCount:  0,
+			LastReadAt:   JSTTime(2025, 12, 20, 14, 10),
+			ReplyCount:   2,
+			IsPrivate:    false,
+			IsArchived:   false,
+			SessionMemory: `
 **Googleの「Agent Development Kit (ADK-go)」** という正確な名称の公式製品は現在存在しませんが、おそらく **「Firebase Genkit (Go SDK)」** のことを指している可能性が高いです。
 
 Googleは現在、AIエージェント開発のためのフレームワークとして **Genkit** を強く推進しており、これがGo言語を公式にサポートしています（以前はNode.jsのみでしたが、Goのサポートが追加されました）。
@@ -150,15 +153,13 @@ Genkitについてより深く知りたい、あるいは「ADK-go」が実はIo
 
 **ツールの使い方（Function Calling）を実装するコード例を見たいですか？**
 `,
-			LastMessageAt: JSTTime(2025, 12, 20, 14, 10),
-			CreatedAt:     JSTTime(2025, 12, 20, 14, 0),
-			UpdatedAt:     JSTTime(2025, 12, 20, 14, 10),
+			MemorizedUntil: JSTTime(1970, 1, 1, 0, 0),
+			CreatedAt:      JSTTime(2025, 12, 20, 14, 0),
 		},
 		Messages: []model.ChatMessage{
 			{
 				Role:      "user",
 				Content:   "GoogleのAgentDevelopmentKit ADK-goについて詳しく教えて。コード例も見せて。",
-				Status:    "completed",
 				CreatedAt: JSTTime(2025, 12, 20, 14, 0),
 			},
 			{
@@ -303,7 +304,6 @@ Genkitについてより深く知りたい、あるいは「ADK-go」が実はIo
 
 **ツールの使い方（Function Calling）を実装するコード例を見たいですか？**
 `,
-				Status:    "received",
 				CreatedAt: JSTTime(2025, 12, 20, 14, 1),
 			},
 		},

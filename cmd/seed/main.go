@@ -62,7 +62,7 @@ func main() {
 	for _, seed := range seedsToRun {
 		threadID := seed.Thread.ID
 		if threadID == "" {
-			threadID = "test-thread-" + seed.Thread.Title
+			log.Fatalf("Seed thread must have an ID")
 		}
 
 		// --- Idempotency: Delete existing data ---
@@ -73,10 +73,21 @@ func main() {
 		// --- Seeding ---
 		thread := seed.Thread
 		thread.CreatedAt = ensureTime(thread.CreatedAt)
-		thread.UpdatedAt = ensureTime(thread.UpdatedAt)
-		thread.LastMessageAt = ensureTime(thread.LastMessageAt)
+		thread.LastReadAt = ensureTime(thread.LastReadAt)
+		thread.MemorizedUntil = ensureTime(thread.MemorizedUntil)
 
-		_, err = client.Collection("threads").Doc(threadID).Set(ctx, thread)
+		_, err = client.Collection("threads").Doc(threadID).Set(ctx, map[string]interface{}{
+			"userId":         thread.UserID,
+			"firstMessage":   thread.FirstMessage,
+			"unreadCount":    thread.UnreadCount,
+			"lastReadAt":     thread.LastReadAt,
+			"replyCount":     thread.ReplyCount,
+			"isPrivate":      thread.IsPrivate,
+			"isArchived":     thread.IsArchived,
+			"sessionMemory":  thread.SessionMemory,
+			"memorizedUntil": thread.MemorizedUntil,
+			"createdAt":      thread.CreatedAt,
+		})
 		if err != nil {
 			log.Fatalf("Failed to create thread: %v", err)
 		}

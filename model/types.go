@@ -7,7 +7,6 @@ type ChatMessage struct {
 	ThreadID    string       `firestore:"threadId"` // Note: Schema doesn't explicitly have threadId in message fields, but it is useful for application logic.
 	Role        string       `firestore:"role"`
 	Content     string       `firestore:"content"`
-	Status      string       `firestore:"status"` // unread, received, generating, completed, error
 	Attachments []Attachment `firestore:"attachments,omitempty"`
 	AIMetadata  *AIMetadata  `firestore:"aiMetadata,omitempty"`
 	CreatedAt   time.Time    `firestore:"createdAt"`
@@ -35,17 +34,17 @@ type AIUsage struct {
 }
 
 type ChatThread struct {
-	ID              string    `firestore:"-"`
-	UserID          string    `firestore:"userId"`
-	Title           string    `firestore:"title"`
-	IsPrivate       bool      `firestore:"isPrivate"`
-	IsArchived      bool      `firestore:"isArchived"`
-	LastMessage     string    `firestore:"lastMessage"`
-	LastMessageAt   time.Time `firestore:"lastMessageAt"`
-	Summary         string    `firestore:"summary"`
-	SummarizedUntil time.Time `firestore:"summarizedUntil"`
-	CreatedAt       time.Time `firestore:"createdAt"`
-	UpdatedAt       time.Time `firestore:"updatedAt"`
+	ID             string    `firestore:"-"`
+	UserID         string    `firestore:"userId"`
+	FirstMessage   string    `firestore:"firstMessage"`
+	UnreadCount    int       `firestore:"unreadCount"`
+	LastReadAt     time.Time `firestore:"lastReadAt"`
+	ReplyCount     int       `firestore:"replyCount"`
+	IsPrivate      bool      `firestore:"isPrivate"`
+	IsArchived     bool      `firestore:"isArchived"`
+	SessionMemory  string    `firestore:"sessionMemory"`
+	MemorizedUntil time.Time `firestore:"memorizedUntil"`
+	CreatedAt      time.Time `firestore:"createdAt"`
 }
 
 type ToolCall struct {
