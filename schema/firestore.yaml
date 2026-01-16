@@ -1,18 +1,30 @@
-# Firestore Schema Definition
-# This file defines the data structure for the YouDoYou Chat application.
+# Firestore Schema Definition (Slack-style Stream)
 # Both server (Go) and client (SwiftUI) should reference this schema.
+# Document IDs for both threads and messages should use UUID v7 for time-ordering.
 
 collections:
   threads:
-    description: "Chat threads"
+    description: "Main timeline posts (like Slack messages in a channel)"
     fields:
       - name: userId
         type: string
         description: "Owner of the thread"
 
-      - name: title
+      - name: firstMessage
         type: string
-        description: "Thread title"
+        description: "The first message content. Acts as the thread's identity."
+
+      - name: unreadCount
+        type: number
+        description: "Number of unread messages"
+
+      - name: lastReadAt
+        type: timestamp
+        description: "Timestamp of the last read message"
+
+      - name: replyCount
+        type: number
+        description: "Total number of replies in messages subcollection"
 
       - name: isPrivate
         type: boolean
@@ -22,27 +34,17 @@ collections:
         type: boolean
         description: "If true, hidden from thread list"
 
-      - name: lastMessage
-        type: string
-        description: "Preview of the last message (truncated)"
+      - name: sessionMemory
+        type: string # JSON string
+        description: "JSON string containing structured summary, decisions, and entities"
 
-      - name: lastMessageAt
+      - name: memorizedUntil
         type: timestamp
-        description: "Timestamp of the last message"
-
-      - name: summary
-        type: string
-        description: "AI-generated summary of older messages"
-
-      - name: summarizedUntil
-        type: timestamp
-        description: "Messages before this time are summarized"
+        description: "The createdAt of the last message included in the sessionMemory"
 
       - name: createdAt
         type: timestamp
-
-      - name: updatedAt
-        type: timestamp
+        description: "Original post timestamp (UUID v7 should also encode this)"
 
     subcollections:
       messages:
@@ -57,21 +59,11 @@ collections:
 
           - name: content
             type: string
-            description: "Message content (supports markdown)"
-
-          - name: status
-            type: string
-            description: "Message processing status"
-            enum:
-              - unread      # Server has not seen yet
-              - received    # Server acknowledged
-              - generating  # AI is generating response
-              - completed   # Done
-              - error       # Failed
+            description: "Reply message content (supports markdown)"
 
           - name: attachments
             type: array
-            description: "Attached files"
+            description: "Attached files in the reply"
             items:
               type: map
               fields:
@@ -80,22 +72,19 @@ collections:
                   enum: [image, text, document, audio, video]
                 - name: url
                   type: string
-                  description: "Cloud Storage URL (gs://...)"
                 - name: mimeType
                   type: string
                 - name: name
                   type: string
                 - name: size
                   type: number
-                  description: "File size in bytes"
 
           - name: aiMetadata
             type: map
-            description: "AI response metadata (assistant messages only)"
+            description: "AI response metadata"
             fields:
               - name: model
                 type: string
-                description: "Model used (e.g., gpt-4o, claude-sonnet)"
               - name: usage
                 type: map
                 fields:
@@ -107,10 +96,8 @@ collections:
                     type: number
               - name: finishReason
                 type: string
-                description: "stop, length, tool_calls, etc."
               - name: responseId
                 type: string
-                description: "API response ID"
 
           - name: createdAt
             type: timestamp

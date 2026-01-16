@@ -12,6 +12,7 @@ import (
 	"youdoyou-server/repository"
 
 	"cloud.google.com/go/firestore"
+	"github.com/google/uuid"
 )
 
 func main() {
@@ -62,20 +63,26 @@ func main() {
 	// Determine thread ID
 	finalThreadID := *threadID
 	if finalThreadID == "" {
-		// Create new thread
-		finalThreadID = fmt.Sprintf("thread-%d", time.Now().Unix())
+		// Create new thread with UUID v7
+		id, err := uuid.NewV7()
+		if err != nil {
+			log.Fatalf("Failed to generate UUID v7: %v", err)
+		}
+		finalThreadID = id.String()
 		log.Printf("Creating new thread: %s", finalThreadID)
 
 		thread := &model.ChatThread{
-			ID:            finalThreadID,
-			UserID:        *userID,
-			Title:         "CLI Created Thread",
-			IsPrivate:     false,
-			IsArchived:    false,
-			LastMessage:   "",
-			LastMessageAt: time.Now(),
-			CreatedAt:     time.Now(),
-			UpdatedAt:     time.Now(),
+			ID:             finalThreadID,
+			UserID:         *userID,
+			FirstMessage:   *message,
+			UnreadCount:    0,
+			LastReadAt:     time.Now(),
+			ReplyCount:     0,
+			IsPrivate:      false,
+			IsArchived:     false,
+			SessionMemory:  "",
+			MemorizedUntil: time.Time{},
+			CreatedAt:      time.Now(),
 		}
 
 		if err := createThread(ctx, client, thread); err != nil {
@@ -91,7 +98,6 @@ func main() {
 		ThreadID:  finalThreadID,
 		Role:      "user",
 		Content:   *message,
-		Status:    "unread",
 		CreatedAt: time.Now(),
 	}
 
@@ -110,16 +116,16 @@ func main() {
 
 func createThread(ctx context.Context, client *firestore.Client, thread *model.ChatThread) error {
 	_, err := client.Collection("threads").Doc(thread.ID).Set(ctx, map[string]interface{}{
-		"userId":          thread.UserID,
-		"title":           thread.Title,
-		"isPrivate":       thread.IsPrivate,
-		"isArchived":      thread.IsArchived,
-		"lastMessage":     thread.LastMessage,
-		"lastMessageAt":   thread.LastMessageAt,
-		"summary":         thread.Summary,
-		"summarizedUntil": thread.SummarizedUntil,
-		"createdAt":       thread.CreatedAt,
-		"updatedAt":       thread.UpdatedAt,
+		"userId":         thread.UserID,
+		"firstMessage":   thread.FirstMessage,
+		"unreadCount":    thread.UnreadCount,
+		"lastReadAt":     thread.LastReadAt,
+		"replyCount":     thread.ReplyCount,
+		"isPrivate":      thread.IsPrivate,
+		"isArchived":     thread.IsArchived,
+		"sessionMemory":  thread.SessionMemory,
+		"memorizedUntil": thread.MemorizedUntil,
+		"createdAt":      thread.CreatedAt,
 	})
 	return err
 }
