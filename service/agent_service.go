@@ -40,51 +40,27 @@ func NewAgentService(
 func (s *AgentService) Chat(ctx context.Context, threadID string) error {
 	log.Printf("ProcessMessage started for thread: %s", threadID)
 
-	// 1. Get Thread for Summary
+	// 1. Get Thread for SessionMemory
 	thread, err := s.chatRepo.GetThread(ctx, threadID)
 	if err != nil {
-		log.Printf("Warning: Failed to get thread summary: %v", err)
+		log.Printf("Warning: Failed to get thread: %v", err)
 	}
-	var summary string
+	var sessionMemory string
 	if thread != nil {
-		summary = thread.Summary
+		sessionMemory = thread.SessionMemory
 	}
 
-	// 2. Get conversation history (all messages)
-	// We optimize by fetching once and filtering in memory
-	history, err := s.chatRepo.GetConversationHistory(ctx, threadID)
+	// 2. Get unmemorized messages (messages after memorizedUntil)
+	history, err := s.chatRepo.GetUnmemorizedMessages(ctx, threadID)
 	if err != nil {
-		return fmt.Errorf("failed to get history: %w", err)
+		return fmt.Errorf("failed to get unmemorized messages: %w", err)
 	}
-	log.Printf("Retrieved conversation history for thread %s, %d messages found", threadID, len(history))
+	log.Printf("Retrieved %d unmemorized messages for thread %s", len(history), threadID)
 
-	// 3. Find latest unread user message
-	var userMsg *model.ChatMessage
-	for i := len(history) - 1; i >= 0; i-- {
-		if history[i].Role == "user" && history[i].Status == "unread" {
-			userMsg = &history[i]
-			break
-		}
-	}
+	// 3. Build Genkit Messages (System + SessionMemory + History)
+	messages := s.buildHistoryMessages(history, sessionMemory)
 
-	if userMsg == nil {
-		log.Printf("No pending user message found")
-		return fmt.Errorf("no pending message found")
-	}
-
-	log.Printf("Found user message: %s", userMsg.ID)
-
-	// 4. Mark as processing
-	if err := s.chatRepo.UpdateMessageStatus(ctx, threadID, userMsg.ID, "generating"); err != nil {
-		log.Printf("Failed to update status to generating: %v", err)
-	}
-	log.Printf("Message %s status updated to 'generating'", userMsg.ID)
-
-	// 5. Build Genkit Messages (System + History)
-	// No longer limiting to last 5 messages, passing full history as requested.
-	messages := s.buildHistoryMessages(history, summary)
-
-	// 6. Provide Tools
+	// 4. Provide Tools
 	// Map map[string]ai.Tool for efficient execution
 	toolMap := make(map[string]ai.Tool)
 	var toolRefs []ai.ToolRef
@@ -93,16 +69,13 @@ func (s *AgentService) Chat(ctx context.Context, threadID string) error {
 		toolRefs = append(toolRefs, t)
 	}
 
-	// 7. Look up the model
+	// 5. Look up the model
 	m := genkit.LookupModel(s.genkitClient, "googleai/gemini-3-flash-preview")
 	if m == nil {
-		if err := s.chatRepo.UpdateMessageStatus(ctx, threadID, userMsg.ID, "error"); err != nil {
-			log.Printf("Failed to update status to error: %v", err)
-		}
 		return fmt.Errorf("model not found")
 	}
 
-	// 8. Agent Loop
+	// 6. Agent Loop
 	// We will loop until the model stops generating tool calls
 	maxTurns := 5
 	var finalContent string
@@ -116,9 +89,6 @@ func (s *AgentService) Chat(ctx context.Context, threadID string) error {
 			ai.WithTools(toolRefs...),
 		)
 		if err != nil {
-			if updateErr := s.chatRepo.UpdateMessageStatus(ctx, threadID, userMsg.ID, "error"); updateErr != nil {
-				log.Printf("Failed to update status to error: %v", updateErr)
-			}
 			return fmt.Errorf("genkit call failed: %w", err)
 		}
 
@@ -176,12 +146,11 @@ func (s *AgentService) Chat(ctx context.Context, threadID string) error {
 		finalContent = "申し訳ありません、処理を完了できませんでした (Max turns reached)."
 	}
 
-	// 9. Save response to Firestore
+	// 7. Save response to Firestore
 	responseMsg := &model.ChatMessage{
 		ThreadID:  threadID,
 		Role:      "assistant",
 		Content:   finalContent,
-		Status:    "completed",
 		CreatedAt: time.Now(),
 	}
 
@@ -190,14 +159,11 @@ func (s *AgentService) Chat(ctx context.Context, threadID string) error {
 		return fmt.Errorf("failed to save response: %w", err)
 	}
 
-	if err := s.chatRepo.UpdateMessageStatus(ctx, threadID, userMsg.ID, "completed"); err != nil {
-		log.Printf("Failed to update status to completed: %v", err)
-	}
-
+	log.Printf("Response saved successfully for thread %s", threadID)
 	return nil
 }
 
-func (s *AgentService) buildHistoryMessages(history []model.ChatMessage, summary string) []*ai.Message {
+func (s *AgentService) buildHistoryMessages(history []model.ChatMessage, sessionMemory string) []*ai.Message {
 	var messages []*ai.Message
 
 	// System Prompt
@@ -208,8 +174,8 @@ func (s *AgentService) buildHistoryMessages(history []model.ChatMessage, summary
 ユーザーの要望に応じて、必要なツールを使用してサポートしてください。
 回答は日本語で、簡潔かつ分かりやすく。`
 
-	if summary != "" {
-		systemPrompt = fmt.Sprintf("【これまでの要約】\n%s\n\n%s", summary, systemPrompt)
+	if sessionMemory != "" {
+		systemPrompt = fmt.Sprintf("【これまでの要約】\n%s\n\n%s", sessionMemory, systemPrompt)
 	}
 
 	messages = append(messages, ai.NewSystemTextMessage(systemPrompt))

@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"time"
 
 	"youdoyou-server/model"
 	"youdoyou-server/repository"
@@ -14,24 +15,15 @@ type MockChatRepository struct {
 // Ensure interface compliance
 var _ repository.ChatRepository = &MockChatRepository{}
 
-func (m *MockChatRepository) GetLatestUserMessage(ctx context.Context, threadID string) (*model.ChatMessage, error) {
-	// Mock implementation
-	return &model.ChatMessage{
-		ID:       "msg_1",
-		ThreadID: threadID,
-		Content:  "テストメッセージ",
-		Role:     "user",
-	}, nil
-}
-
-func (m *MockChatRepository) GetConversationHistory(ctx context.Context, threadID string) ([]model.ChatMessage, error) {
+func (m *MockChatRepository) GetUnmemorizedMessages(ctx context.Context, threadID string) ([]model.ChatMessage, error) {
 	return []model.ChatMessage{}, nil
 }
 
 func (m *MockChatRepository) GetThread(ctx context.Context, threadID string) (*model.ChatThread, error) {
 	return &model.ChatThread{
-		ID:      threadID,
-		Summary: "Mock summary for testing",
+		ID:             threadID,
+		SessionMemory:  "Mock session memory for testing",
+		MemorizedUntil: time.Now().Add(-1 * time.Hour), // One hour ago
 	}, nil
 }
 
@@ -39,7 +31,7 @@ func (m *MockChatRepository) SaveMessage(ctx context.Context, message *model.Cha
 	return "mock_id", nil
 }
 
-func (m *MockChatRepository) UpdateMessageStatus(ctx context.Context, threadID, messageID string, status string) error {
+func (m *MockChatRepository) CreateThread(ctx context.Context, thread *model.ChatThread) error {
 	return nil
 }
 

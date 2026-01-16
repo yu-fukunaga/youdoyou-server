@@ -34,14 +34,14 @@ func main() {
 		threadID = os.Args[1]
 	}
 
-	history, err := repo.GetConversationHistory(ctx, threadID)
+	history, err := repo.GetUnmemorizedMessages(ctx, threadID)
 	if err != nil {
-		log.Fatalf("Failed to get history: %v", err)
+		log.Fatalf("Failed to get unmemorized messages: %v", err)
 	}
 
-	fmt.Printf("--- Conversation History for %s ---\n", threadID)
+	fmt.Printf("--- Unmemorized Messages for %s ---\n", threadID)
 	for _, msg := range history {
-		fmt.Printf("[%s] %s (%s) ID:%s : %s\n", msg.CreatedAt.Format("15:04:05"), msg.Role, msg.Status, msg.ID, msg.Content)
+		fmt.Printf("[%s] %s ID:%s : %s\n", msg.CreatedAt.Format("15:04:05"), msg.Role, msg.ID, msg.Content)
 
 	}
 	fmt.Printf("---------------------------------------\n")
